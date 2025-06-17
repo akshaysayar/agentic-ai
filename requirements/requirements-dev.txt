@@ -1,0 +1,21 @@
+# Code Quality
+black
+isort
+pylint
+mypy
+autoflake
+
+# Testing
+pytest
+pytest-cov
+coverage
+factory-boy
+
+# Typing
+types-python-dateutil
+
+transformers
+torch
+torchvision
+torchaudio
+qdrant-client

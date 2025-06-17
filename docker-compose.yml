@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  # research_tool_rag:
+  #   build: .
+  #   volumes:
+  #     - ./:/app
+  #   environment:
+  #     - PYTHONPATH=/app/src
+  #   command: python src/research_tool_rag/rag/ingest_pipeline.py
+  #   depends_on:
+  #     - qdrant
+
+  qdrant:
+      image: qdrant/qdrant:latest
+      restart: always
+      ports:
+        - "6333:6333"
+        - "6334:6334"
+      volumes:
+        - qdrant_data:/qdrant/storage
+        - qdrant_logs:/qdrant/logs
+
+volumes:
+  qdrant_data:
+  qdrant_logs:

@@ -1,0 +1,49 @@
+[project]
+name = "research_tool_rag"
+version = "0.1.0"
+description = "RAG-based agentic system to query US state laws"
+authors = [{ name = "Akshay Sayar", email = "you@example.com" }]
+readme = "README.md"
+requires-python = ">=3.9"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[build-system]
+requires = ["setuptools>=67", "wheel"]
+build-backend = "setuptools.build_meta"
+
+# Formatter (Black)
+[tool.black]
+line-length = 100
+target-version = ["py39"]
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.venv
+  | venv
+  | build
+  | dist
+)/
+'''
+
+# Import Sorter (isort)
+[tool.isort]
+profile = "black"
+line_length = 100
+multi_line_output = 3
+include_trailing_comma = true
+known_first_party = "research_tool_rag"
+
+# Linter (ruff)
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+select = ["E", "F", "W", "I"]
+exclude = ["venv", ".venv", "build", "dist"]
+
+# Test runner (pytest)
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q"
+testpaths = ["tests"]
