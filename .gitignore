@@ -6,3 +6,4 @@ logs/
 __pycache__/
 research_tool_rag.egg-info/
 legal-bert/
+langchain-academy/
