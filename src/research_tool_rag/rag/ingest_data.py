@@ -1,184 +1,148 @@
+import argparse
 import logging
-from dataclasses import dataclass, field
-from itertools import chain
 from pathlib import Path
-from typing import Iterable, List, Literal, Tuple, Union
-from uuid import UUID
 
-from lxml import etree
+from langchain_core.documents import Document
 
-from research_tool_rag.utils.utils import text_hash
+from research_tool_rag.configs import config
+from research_tool_rag.db_store.qdrant import QdrantDB
+from research_tool_rag.preprocessing.hierarchy import Hierarchy
+from research_tool_rag.utils.utils import setup_logging
 
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class Node:
-    name: str
-    hierarchical_name: str
-    hierarchical_number: str
-    hierarchical_title: str
-    number: str
-    content: str
-    version: str
-    id: UUID
-    parent: "Node"
-    child_nodes: List["Node"] = field(default_factory=list)
-    hierarchy: "Hierarchy" = field(init=True, default=None)
+setup_logging("ingest_data", stream_handler=True)
 
-    def __repr__(self):
-        return f"Node({self.number}-{self.name})"
-
-    @staticmethod
-    def _get_title(element: etree.Element) -> Tuple[str, str]:
-        number = name = ""
-        if (name_elm := element.find("name")) is not None:
-            name = " ".join(s.strip() for s in name_elm.xpath("text()")).strip()
-        if (num_el := element.find("number")) is not None:
-            if num_el.text is not None:
-                return (num_el.text.strip(), name)
-        return (number, name)
-
-    @staticmethod
-    def _get_version(element: etree.Element) -> str:
-        if (version := element.find("version")) is not None:
-            return version.text.strip() if version.text else ""
-        return "1"
-
-    @staticmethod
-    def _body_text(element: etree.Element) -> str:
-        iter_codetext = chain.from_iterable(
-            elem.itertext() for elem in element.iterdescendants("codetext")
-        )
-        stripped = filter(str.strip, iter_codetext)
-        return "".join(stripped)
-
-    @staticmethod
-    def is_leaf_node(element: etree.Element) -> bool:
-        return False if element.xpath("boolean(code)") else True
+logger.info("Starting to build hierarchy from XML file.")
 
 
-@dataclass
-class Hierarchy:
-    state: str = ""
-    law_type: Literal["laws", "regs"] = ""
-    title: str = ""
-    children: List[Node] = field(default_factory=list)
-    path: Union[str, Path] = ""  # Store path if you want
-    root_node: Node = field(init=False, default=None)
+# h = Hierarchy(path="/home/akshaysayar/agentic_ai/data/00.raw/ny-laws/abandoned_property/fixtures/02.purged/2024/0420-000000/ny/statute/xml/abandoned_property.xml")
+# h.build_hierarchy()
+# qdrant_db = QdrantDB()
+# breakpoint()
+# qdrant_db.index_sections(h.children)
+# oh_yeah = qdrant_db.search(query="Unclaimed amounts or securities held by foreign corporations")
+# breakpoint()
 
-    def get_node_by_locator(self, locator: str) -> Node:
-        """
-        Get a node by its hierarchy loc.
-        Args:
-            locator (str): The locator of the node to find.
-            exaample: 0/1/2/3
-        Returns:
-            Node: The node with the specified locator.
-        """
-        node: Node = None
 
-        for pos in locator.split("/"):
-            if pos.isdigit():
-                pos = int(pos)
-            if node is None:
-                node = self.root_node.child_nodes[pos]
-            else:
-                node = node.child_nodes[pos]
+# def init_model():
+#     import getpass
+#     import os
 
-        return node
+#     if not os.environ.get("GOOGLE_API_KEY"):
+#         os.environ["GOOGLE_API_KEY"] = "AIzaSyDB5-l0ck6YwuCyLxDHYl76Jt4pOpDB5Zw"#getpass.getpass("Enter API key for Google Gemini: ")
 
-    def __post_init__(self):
-        if isinstance(self.path, str):
-            self.path = Path(self.path)
+#     from langchain.chat_models import init_chat_model
 
-        if not self.path.exists():
-            raise FileNotFoundError(f"Path {self.path} does not exist")
+#     llm = init_chat_model("gemini-2.0-flash", model_provider="google_genai")
 
-        try:
-            self.state, self.law_type = self.path.parts[-10].split("-")
-            self.title = self.path.parts[-9].replace("_", " ").strip()
-        except (IndexError, ValueError) as e:
-            raise ValueError(f"Path format invalid: {self.path}") from e
+#     from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
-        if self.law_type not in ("laws", "regs"):
-            raise ValueError("law_type must be either 'Laws' or 'Regs'")
+#     embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+#     return llm, embeddings
 
-    def _depth_first_walk(
-        self, node: Union[Node, None] = None
-    ) -> Iterable[Union[Node, "Hierarchy"]]:
-        if node is None:
-            node = self
-        yield node
-        for child in node.child_nodes:
-            if child is None:
-                raise ValueError(
-                    f"Node {node} has a child node_id reference that does not exist in the repo"
+# def init_db(embeddings):
+#     from langchain_qdrant import QdrantVectorStore
+#     from qdrant_client import QdrantClient
+
+#     client = QdrantClient("localhost", port=6333)
+#     collections = [c.name for c in client.get_collections().collections]
+#     collection_name = "US_LAWS"
+
+#     if collection_name not in collections:
+#             client.recreate_collection(
+#                 collection_name=collection_name,
+#                 vectors_config=models.VectorParams(size=768, distance="Cosine"),
+#             )
+
+#     vector_store = QdrantVectorStore(
+#         client=client,
+#         collection_name="US_LAWS",
+#         embedding=embeddings,
+#     )
+#     return client, vector_store
+
+# def main(content_set: str, online_model: bool = False):
+#     llm, embeddings = init_model()
+#     db, vector_store = init_db(embeddings)
+#     # path = Path(__file__).parent.glob(f"data/00.raw/{content_set}/abandoned_property/**/*.xml")
+#     # breakpoint()
+
+#     for files in Path(__file__).parent.glob(f"data/00.raw/{content_set}/*/**/*.xml"):
+#         logger.info(f"Processing file: {files}")
+#         title = Hierarchy(path=files)
+#         title.build_hierarchy()
+#         docs = []
+#         for section in title.children:
+#              idx= 0
+#              docs.append(Document(
+#                 page_content=section.content,
+#                 metadata={
+#                         "section_id": str(section.id),
+#                         "number": section.number,
+#                         "name": section.name,
+#                         "state": section.hierarchy.state,
+#                         "law_type": section.hierarchy.law_type,
+#                         "title": section.hierarchical_title,
+#                         "hierarchical_name": section.hierarchical_name,
+#                         "hierarchical_number": section.hierarchical_number,
+#                         "paragraph_id": f"{str(section.id)}_{idx}",
+#                 }
+#             ))
+
+#         logger.info(f"Indexed sections from {files} into Qdrant.")
+
+#     # text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+#     # all_splits = text_splitter.split_documents(docs)
+
+#     # Index chunks
+#         _ = vector_store.add_documents(documents=docs)
+
+
+def process_and_ingest(content_set):
+    qdb = QdrantDB()
+    for files in Path(__file__).parent.parent.parent.parent.glob(
+        f"data/00.raw/{content_set}/*/**/*.xml"
+    ):
+        logger.info(f"Processing file: {files}")
+        title = Hierarchy(path=files)
+        title.build_hierarchy()
+        docs = []
+        for section in title.children:
+            idx = 0
+            docs.append(
+                Document(
+                    page_content=section.content,
+                    metadata={
+                        "section_id": str(section.id),
+                        "number": section.number,
+                        "name": section.name,
+                        "state": section.hierarchy.state,
+                        "law_type": section.hierarchy.law_type,
+                        "title": section.hierarchical_title,
+                        "hierarchical_name": section.hierarchical_name,
+                        "hierarchical_number": section.hierarchical_number,
+                        "paragraph_id": f"{str(section.id)}_{idx}",
+                    },
                 )
-            yield from self._depth_first_walk(child)
+            )
 
-    def _build_node(self, element: etree.Element, parent: Node) -> Node:
-        number, name = Node._get_title(element)
-        version = Node._get_version(element)
-        hierarchical_title = (
-            f"{parent.hierarchical_title} - {number} {name}".replace("  ", " ")
-            .replace("\n", "")
-            .strip()
-        )
+        logger.info(f"Indexed sections from {files} into Qdrant.")
 
-        node = Node(
-            name=name,
-            hierarchical_name=f"{parent.hierarchical_name} -> {name}".replace("  ", " ")
-            .replace("\n", "")
-            .strip(),
-            number=number,
-            hierarchical_number=f"{parent.hierarchical_number} -> {number}".replace("  ", " ")
-            .replace("\n", "")
-            .strip(),
-            hierarchical_title=hierarchical_title,
-            content=Node._body_text(element),
-            version=version,
-            id=UUID(text_hash(f"{hierarchical_title}-v{version}"), version=4),
-            parent=parent,
-            hierarchy=self,
-        )
+        # text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+        # all_splits = text_splitter.split_documents(docs)
 
-        if Node.is_leaf_node(element):
-            # logger.info(f"Created {node}")
-            self.children.append(node)
-            return node
+        # Index chunks
+        _ = qdb.vector_store.add_documents(documents=docs)
 
-        for child in element.findall("code"):
-            child_node = self._build_node(child, node)
-            node.child_nodes.append(child_node)
 
-        return node
-
-    def build_hierarchy(self) -> Node:
-        """
-        Build a hierarchy of nodes from the XML structure.
-        """
-        tree = etree.parse(self.path)
-        root_element = tree.find('code[@type="Root"]')
-        number, name = Node._get_title(root_element)
-        version = Node._get_version(root_element)
-        hierarchical_title = f"{number} {name}".replace("  ", " ").replace("\n", "").strip()
-
-        self.root_node = Node(
-            name=name,
-            hierarchical_name=name,
-            number=number,
-            hierarchical_number=number,
-            hierarchical_title=hierarchical_title,
-            content="",
-            version=version,
-            id=UUID(text_hash(f"{hierarchical_title}-v{version}"), version=4),
-            parent=None,
-            hierarchy=self,
-        )
-
-        for child in root_element.findall("code"):
-            child_node = self._build_node(child, self.root_node)
-            self.root_node.child_nodes.append(child_node)
-
-        return self.root_node
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Ingest data from XML files into Qdrant.")
+    parser.add_argument(
+        "--content_set", type=str, required=True, help="Which content set to ingest."
+    )
+    # parser.add_argument("--online_model", type=bool, default=False, help="Use online model for processing.")
+    args = parser.parse_args()
+    config.use_config("offline")
+    process_and_ingest(args.content_set)

@@ -17,7 +17,7 @@ def text_hash(text: str, algo=hashlib.md5, strip_all_punctuation=False) -> str:
     return algo(normalized.encode("utf-8")).hexdigest()
 
 
-def setup_logging(name: str, level: int = logging.INFO, stream_handler: bool = False) -> None:
+def setup_logging(name: str, level: int = logging.INFO, stream_handler: bool = True) -> None:
     """
     Set up logging for the application.
 
