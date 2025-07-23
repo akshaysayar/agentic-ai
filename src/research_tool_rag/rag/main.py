@@ -1,34 +1,51 @@
 import logging
-
-import fastapi
-
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 from research_tool_rag.configs import config
 from research_tool_rag.rag.pipeline import RAGPipeline
 from research_tool_rag.state.state_schema import OutputState
 
-app = fastapi.FastAPI(
+app = FastAPI(
     title="Research Tool",
     description="API service to research tool",
     version="0.1.0",
 )
 
+# Allow CORS for local development with Streamlit or other UIs
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # In production, restrict this
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Init configs and pipeline
 config.use_config("online")
 pipeline = RAGPipeline()
 
+# Chat sessions if you plan to extend with memory
+chat_sessions = {}
 
+# Health check
 @app.get("/")
 async def read_root():
-    """Basic health check endpoint."""
     logging.info("Root endpoint '/' accessed (health check).")
-    return {"status": "ok", "message": "Document Change Analyzer API is running."}
+    return {"status": "ok", "message": "Research Tool API is running."}
 
+# Request model for RAG endpoint
+class RAGRequest(BaseModel):
+    query: str
+    chat_history: list[dict] = []
 
-@app.post("/rag", response_model=OutputState)
-def rag_query(question: str):
-
-    if not question:
-        question = (
-            "Explain the penalties for violating agricultural market regulations in New York."
-        )
+# RAG endpoint compatible with Streamlit
+@app.post("/rag")#, response_model=OutputState)
+def rag_query(request: RAGRequest):
+    question = request.query or "Explain the penalties for violating agricultural market regulations in New York."
+    print(question)
+    # You can optionally pass chat_history to your pipeline if supported
     result = pipeline.run(question=question)
+    # result = {'answer':'this is generated msg','role':'bot','content':'message content',"suggested_prompts": ['whats up','nothing much']}
+    print(result['answer'])
     return result

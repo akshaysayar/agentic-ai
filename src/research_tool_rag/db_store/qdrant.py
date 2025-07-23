@@ -20,20 +20,23 @@ class QdrantDB:
         self.collection_name = config.collection_name
         # Initialize Qdrant
         self.client = QdrantClient(config.db_url, port=config.db_port)
-
+        # self.client.delete_collection(collection_name=self.collection_name)
         # Create collection if not exists
         if not self.client.collection_exists(self.collection_name):
             self.client.recreate_collection(
                 collection_name=self.collection_name,
                 vectors_config=models.VectorParams(
-                    size=4096, distance=config.model_db_config.get("collection_distance", "Cosine")
+                    size=768, distance=config.model_db_config.get("collection_distance", "Cosine"),
                 ),
             )
 
         self.vector_store = QdrantVectorStore(
             client=self.client,
             collection_name=config.collection_name,
+            # vectors_config=models.VectorParams(
+            #         size=4096, distance=config.model_db_config.get("collection_distance", "Cosine"),),
             embedding=config.embeddings,
+            # force_recreate=True,  
         )
 
     # @staticmethod

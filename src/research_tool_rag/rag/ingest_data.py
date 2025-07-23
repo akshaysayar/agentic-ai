@@ -1,6 +1,7 @@
 import argparse
 import logging
 from pathlib import Path
+import time
 
 from langchain_core.documents import Document
 
@@ -101,10 +102,16 @@ logger.info("Starting to build hierarchy from XML file.")
 
 
 def process_and_ingest(content_set):
+    l = ['judiciary.xml','legislative.xml','defense_emergency_act_1951.xml','regulation_of_lobbying_act.xml','canal.xml','retirement_and_social_security.xml','state_administrative_procedure_act.xml',
+         'emergency_housing_rent_control_law.xml','real_property_actions_and_proceedings.xml','nys_project_finance_agency_act.xml','second_class_cities.xml','personal_property.xml',
+         'surrogates_court_procedure.xml','civil_practice_law_and_rules.xml','lien.xml']
+    not_done = []
     qdb = QdrantDB()
     for files in Path(__file__).parent.parent.parent.parent.glob(
         f"data/00.raw/{content_set}/*/**/*.xml"
     ):
+        if files.name in l:
+            continue
         logger.info(f"Processing file: {files}")
         title = Hierarchy(path=files)
         title.build_hierarchy()
@@ -134,7 +141,17 @@ def process_and_ingest(content_set):
         # all_splits = text_splitter.split_documents(docs)
 
         # Index chunks
-        _ = qdb.vector_store.add_documents(documents=docs)
+        try:
+            for doc in docs:
+                _ = qdb.vector_store.add_documents(documents=[doc])
+                time.sleep(0.1)
+            l.append(files.name)
+                
+        except Exception as e:
+            print(f"Error indexing {files}: {e}")
+            print(l)
+            raise e
+                # not_done = not_done.append(files.name)
 
 
 if __name__ == "__main__":
@@ -144,5 +161,5 @@ if __name__ == "__main__":
     )
     # parser.add_argument("--online_model", type=bool, default=False, help="Use online model for processing.")
     args = parser.parse_args()
-    config.use_config("offline")
+    config.use_config("online")
     process_and_ingest(args.content_set)

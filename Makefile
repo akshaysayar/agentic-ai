@@ -22,7 +22,7 @@ env: $(ENV_DIR) print-install-message
 fixup:
 	autoflake --in-place --remove-all-unused-imports --ignore-init-module-imports -r src tests
 	isort src/ tests/
-	black --line-length=100 src/ tests/
+	black --line-length=100 src/ tests/ 
 
 lint:
 	isort --check-only src tests sandbox
