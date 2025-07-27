@@ -16,24 +16,46 @@ class QdrantDB:
     collection_name: str
     vector_store: QdrantVectorStore
 
-    def __init__(self):
-        self.collection_name = config.collection_name
-        # Initialize Qdrant
-        self.client = QdrantClient(config.db_url, port=config.db_port)
+    def __init__(self, collection_name=None):
+        # Use provided collection_name, else config, else default
+        try:
+            # from research_tool_rag.configs import config
+            config_collection = getattr(config, "collection_name", None)
+        except Exception:
+            config_collection = None
+        self.collection_name = collection_name or config_collection or "PROFILE_COLLECTION"
+        # Initialize Qdrant with defaults if config is missing values
+        db_url = getattr(config, "db_url", "localhost")
+        db_port = getattr(config, "db_port", 6333)
+        self.client = QdrantClient(db_url, port=db_port)
 
-        # Create collection if not exists
-        if not self.client.collection_exists(self.collection_name):
-            self.client.recreate_collection(
-                collection_name=self.collection_name,
-                vectors_config=models.VectorParams(
-                    size=4096, distance=config.model_db_config.get("collection_distance", "Cosine")
+        # Always ensure collection has correct vector size
+        expected_size = 768
+        # Always force recreate the collection with the correct vector size before using it
+        self.client.recreate_collection(
+            collection_name=self.collection_name,
+            vectors_config=models.VectorParams(
+                size=expected_size,
+                distance=getattr(config, "model_db_config", {}).get(
+                    "collection_distance", "Cosine"
                 ),
-            )
+            ),
+        )
 
+        # Try to get embeddings from config.model_db_config if available
+        embeddings = None
+        if hasattr(config, "model_db_config") and isinstance(config.model_db_config, dict):
+            embeddings = config.model_db_config.get("embeddings", None)
+        if embeddings is None:
+            embeddings = getattr(config, "embeddings", None)
+        if embeddings is None:
+            raise ValueError(
+                "No embedding model found in config or model_db_config. Please set one."
+            )
         self.vector_store = QdrantVectorStore(
             client=self.client,
-            collection_name=config.collection_name,
-            embedding=config.embeddings,
+            collection_name=self.collection_name,
+            embedding=embeddings,
         )
 
     # @staticmethod

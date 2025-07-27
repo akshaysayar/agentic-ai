@@ -7,3 +7,5 @@ __pycache__/
 research_tool_rag.egg-info/
 legal-bert/
 langchain-academy/
+venv/
+data/
