@@ -1,10 +1,9 @@
 import logging
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from research_tool_rag.configs import config
 from research_tool_rag.rag.pipeline import RAGPipeline
-from research_tool_rag.state.state_schema import OutputState
 
 app = FastAPI(
     title="Research Tool",

@@ -1,6 +1,5 @@
 from langchain import hub
 from langgraph.graph import START, StateGraph
-from qdrant_client import models
 from research_tool_rag.configs import config
 from research_tool_rag.db_store.qdrant import QdrantDB
 from research_tool_rag.state.state_schema import InputState, OutputState, OverallState

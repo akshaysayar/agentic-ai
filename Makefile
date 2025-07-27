@@ -1,6 +1,6 @@
 # Project: research_tool_rag
 
-PYTHON=python3.10
+PYTHON=python3
 ENV_DIR=venv
 
 export PYTHONPATH=src
@@ -8,7 +8,7 @@ export PYTHONPATH=src
 # --- Environment Management ---
 
 $(ENV_DIR):
-	$(PYTHON) -m env $(ENV_DIR)
+	$(PYTHON) -m venv $(ENV_DIR)
 
 print-install-message:
 	@echo "✅ Virtual environment created at $(ENV_DIR)"
@@ -19,10 +19,22 @@ env: $(ENV_DIR) print-install-message
 
 # --- Formatting and Linting ---
 
+
 fixup:
-	autoflake --in-place --remove-all-unused-imports --ignore-init-module-imports -r src tests
-	isort src/ tests/
-	black --line-length=100 src/ tests/ 
+	@if [ -d src ]; then \
+	autoflake --in-place --remove-all-unused-imports --ignore-init-module-imports -r src; \
+	isort src/; \
+	black --line-length=100 src/; \
+  fi
+	@if [ -d tests ]; then \
+	autoflake --in-place --remove-all-unused-imports --ignore-init-module-imports -r tests; \
+	isort tests/; \
+	black --line-length=100 tests/; \
+  fi
+	@if [ -d sandbox ]; then \
+	isort sandbox/; \
+	black --line-length=100 sandbox/; \
+  fi
 
 lint:
 	isort --check-only src tests sandbox

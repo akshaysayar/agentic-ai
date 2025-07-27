@@ -1,4 +1,4 @@
-# Code Quality
+
 black
 isort
 pylint
@@ -14,8 +14,32 @@ factory-boy
 # Typing
 types-python-dateutil
 
+# ML/Vector/LLM
 transformers
 torch
 torchvision
 torchaudio
+sentence-transformers
+langchain
+langchain-core
+langchain-qdrant
+langchain-google-genai
+langchain-ollama
+langgraph
+langchain_core
+langchain_community
 qdrant-client
+
+# Web/API
+fastapi
+uvicorn
+streamlit
+requests
+lxml
+python-dotenv
+
+# Data/Utils
+pydantic
+typing-extensions
+dataclasses
+

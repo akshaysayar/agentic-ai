@@ -1,8 +1,27 @@
-import importlib
+import getpass
 import logging
+import os
 from typing import Literal
 
+from langchain.chat_models import init_chat_model
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
+
 # from src.research_tool_rag.configs.defaults import defaults
+
+
+if not os.environ.get("GOOGLE_API_KEY"):
+    os.environ["GOOGLE_API_KEY"] = getpass.getpass("Enter API key for Google Gemini: ")
+
+config_mode = {
+    "online": {
+        "llm": init_chat_model("gemini-2.0-flash", model_provider="google_genai"),
+        "embeddings": GoogleGenerativeAIEmbeddings(model="models/embedding-001"),
+        "db_url": "localhost",
+        "db_port": 6333,
+        "collection_name": "US_LAWS",
+        "collection_distance_metric": "Cosine",
+    }
+}
 
 
 class Config:
@@ -10,8 +29,9 @@ class Config:
 
     def use_config(self, mode: Literal["online", "offline"] = "online", llm: str = None):
         try:
-            config_module = importlib.import_module(f"{__package__}.{mode}")
-            self.model_db_config = config_module.model_db_config
+            config_module = config_mode["online"]
+            # For debugging purposes, remove in production
+            self.model_db_config = config_module
         except ModuleNotFoundError:
             logging.error(f"Could not find config named {mode}, going ahead with defaults")
 

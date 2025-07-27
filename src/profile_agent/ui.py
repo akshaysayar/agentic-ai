@@ -1,7 +1,5 @@
-import streamlit as st
-import streamlit.components.v1 as components
-
 import requests
+import streamlit as st
 
 FASTAPI_RAG_ENDPOINT = "http://localhost:8000/rag"
 
@@ -30,13 +28,13 @@ for msg in st.session_state.messages:
                 else:
                     st.markdown(f"- {source}")
 
+
 # Function to handle user input or suggested prompt
 def process_user_input(prompt_text):
     st.session_state.messages.append({"role": "user", "content": prompt_text})
 
     chat_history_for_api = [
-        {"role": msg["role"], "content": msg["content"]}
-        for msg in st.session_state.messages
+        {"role": msg["role"], "content": msg["content"]} for msg in st.session_state.messages
     ]
 
     try:
@@ -58,11 +56,9 @@ def process_user_input(prompt_text):
         suggested_prompts = []
         sources = []
 
-    st.session_state.messages.append({
-        "role": "assistant",
-        "content": bot_response,
-        "sources": sources
-    })
+    st.session_state.messages.append(
+        {"role": "assistant", "content": bot_response, "sources": sources}
+    )
     st.session_state["suggested_prompts"] = suggested_prompts
 
     with st.chat_message("assistant"):
@@ -72,7 +68,6 @@ def process_user_input(prompt_text):
             st.markdown("# Sources:")
             for source in sources:
                 st.markdown(f"- {source}")
-
 
     # # Display assistant message immediately
     # with st.chat_message("assistant"):
@@ -84,6 +79,7 @@ def process_user_input(prompt_text):
     #                 st.markdown(f"- [{source['title']}]({source['url']})")
     #             else:
     #                 st.markdown(f"- {source}")
+
 
 # Suggested prompt buttons
 if st.session_state["suggested_prompts"]:

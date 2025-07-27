@@ -1,11 +1,25 @@
 env/
+venv/
+.venv/
+
+# Data and logs
 data/
 logs/
-2501-Propylon-main/
+
+# IDE/editor folders
 .vscode/
+.idea/
+
+# Python cache and build artifacts
 __pycache__/
+*.pyc
+build/
+dist/
+*.egg-info/
 research_tool_rag.egg-info/
+
+# Project-specific
+2501-Propylon-main/
 legal-bert/
 langchain-academy/
-.venv/
-venv/
+sandbox/__pycache__/
