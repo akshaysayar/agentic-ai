@@ -40,8 +40,9 @@ test:
 ingest:
 	python src/research_tool_rag/rag/ingest_pipeline.py
 
+
 run-agent:
-	python main.py
+	python src/research_tool_rag/rag/main.py
 
 # --- Combined Actions ---
 
