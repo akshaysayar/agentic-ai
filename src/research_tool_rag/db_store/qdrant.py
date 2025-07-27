@@ -55,7 +55,10 @@ class QdrantDB:
         self.vector_store = QdrantVectorStore(
             client=self.client,
             collection_name=self.collection_name,
+            # vectors_config=models.VectorParams(
+            #         size=4096, distance=config.model_db_config.get("collection_distance", "Cosine"),),
             embedding=embeddings,
+            # force_recreate=True,  
         )
 
     # @staticmethod

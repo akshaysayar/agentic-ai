@@ -1,0 +1,10 @@
+{
+    "dockerfile_lines": [],
+    "graphs": {
+      "play": "./temp.py:rag_graph"
+    },
+    "python_version": "3.12",
+    "dependencies": [
+      "."
+    ]
+  }
